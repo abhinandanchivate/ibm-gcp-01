@@ -59,3 +59,71 @@
 
 ---
 
+                             ┌─────────────────────────────────────────┐
+                             │                INTERNET                 │
+                             │         (Users → HTTPS 443)             │
+                             └───────────────────┬──────────────────────┘
+                                                 │ 443
+                                        ┌────────▼─────────┐
+                                        │   Google POP     │
+                                        │  (Edge Network)  │
+                                        └────────┬─────────┘
+                                                 │
+                                                 │ Global Routing (Google Backbone)
+                                                 │
+                           ┌─────────────────────▼─────────────────────┐
+                           │     HTTPS LOAD BALANCER (443 → 80/8080)   │
+                           │  Cloud Armor (WAF) + CDN (Optional)       │
+                           └─────────────────────┬─────────────────────┘
+                                                 │
+                                                 │ Traffic to backend → 80/8080
+                                                 │
+                           ┌─────────────────────▼────────────────────────┐
+                           │        GCP VPC NETWORK (shopglobal-vpc)      │
+                           │               Custom Mode VPC                │
+                           └─────────────────────┬────────────────────────┘
+                                                 │
+                           ┌─────────────────────▼────────────────────────┐
+                           │              VPC FIREWALL RULES               │
+                           │ allow-http-https     → tcp:80,tcp:443         │
+                           │ allow-gke-nodes      → tcp:10250,443          │
+                           │ allow-cloudsql       → tcp:5432 (internal)    │
+                           │ allow-ssh (optional) → tcp:22                 │
+                           └─────────────────────┬────────────────────────┘
+                                                 │ Allowed Only
+            ┌────────────────────────────────────┴──────────────────────────────────┐
+            │                                 SUBNETS                               │
+            │  frontend-subnet    : 10.0.1.0/24 (GKE nodes, LB backends)            │
+            │  backend-subnet     : 10.0.2.0/24 (API services, internal pods)       │
+            │  db-private-subnet  : 10.0.3.0/24 (Cloud SQL Private IP)              │
+            └───────────────────────────────┬───────────────────────────────────────┘
+                                            │
+                                            │
+        ┌───────────────────────────────────▼────────────────────────────────┐
+        │                       GKE CLUSTER (REGIONAL)                        │
+        │────────────────────────────────────────────────────────────────────│
+        │  • Frontend Pods (Ports: 80/8080)                                   │
+        │  • Backend/API Pods (Ports: 8080)                                   │
+        │  • NEG/Backend service for LB                                      │
+        │  • NodePort used internally for LB attachment                      │
+        └───────────────────────────────────┬────────────────────────────────┘
+                                            │
+                                            │  Private IP + cloudsql connector 
+                                            │  Communication port → 5432
+                        ┌───────────────────▼────────────────────┐
+                        │        CLOUD SQL (POSTGRESQL)          │
+                        │    Private IP: 10.0.3.10               │
+                        │    Port: 5432 (internal only)          │
+                        │    IAM DB Auth + SSL/TLS               │
+                        └───────────────────┬────────────────────┘
+                                            │
+                                            │  OUTBOUND HTTPS ONLY → 443
+                                            │  Using service account identity
+                      ┌─────────────────────▼────────────────────────────────┐
+                      │                     BIGQUERY                         │
+                      │  Enterprise Data Warehouse / Analytics                │
+                      │  Access Method: HTTPS API (tcp:443)                   │
+                      │  No inbound ports, No DB ports                         │
+                      │  Protected by: IAM + VPC Service Controls              │
+                      └──────────────────────────────────────────────────────┘
+
