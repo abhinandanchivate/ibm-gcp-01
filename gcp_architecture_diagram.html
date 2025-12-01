@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCP Enterprise Architecture - GlobalMart Inc.</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1em;
+            font-weight: 600;
+            color: #495057;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .nav-tab:hover {
+            background: #e9ecef;
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: #4285f4;
+            border-bottom: 3px solid #4285f4;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .architecture-diagram {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px solid #dee2e6;
+        }
+
+        .layer {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid #4285f4;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .layer-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4285f4;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .layer-title .icon {
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+
+        .components {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .component {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .component:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            border-color: #4285f4;
+        }
+
+        .component-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .component-desc {
+            font-size: 0.9em;
+            color: #5a6c7d;
+        }
+
+        .explanation-section {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .explanation-section h3 {
+            color: #856404;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .explanation-section ul {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        .explanation-section ul li {
+            margin-bottom: 10px;
+        }
+
+        .benefit-box {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .benefit-box h3 {
+            color: #155724;
+            margin-bottom: 15px;
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .benefit-icon {
+            color: #28a745;
+            margin-right: 10px;
+            font-size: 1.5em;
+        }
+
+        .flow-diagram {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #dee2e6;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .flow-step:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .flow-number {
+            background: #4285f4;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .flow-content {
+            flex: 1;
+        }
+
+        .flow-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .flow-desc {
+            font-size: 0.9em;
+            color: #5a6c7d;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .tech-badge {
+            background: #4285f4;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .network-diagram {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+
+        .network-layer {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .network-header {
+            font-weight: bold;
+            color: #4285f4;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .subnet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .subnet {
+            background: #e7f3ff;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid #4285f4;
+        }
+
+        .subnet-name {
+            font-weight: bold;
+            font-size: 0.9em;
+            color: #2c3e50;
+        }
+
+        .subnet-cidr {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            color: #5a6c7d;
+        }
+
+        .security-layer {
+            background: #fff3e0;
+            border-left: 5px solid #ff9800;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .security-layer h3 {
+            color: #e65100;
+            margin-bottom: 15px;
+        }
+
+        .security-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .security-control {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #ffb74d;
+        }
+
+        .control-name {
+            font-weight: bold;
+            color: #e65100;
+            margin-bottom: 5px;
+        }
+
+        .control-desc {
+            font-size: 0.9em;
+            color: #5a6c7d;
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .footer p {
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .components {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 300px;
+            background-color: #555;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -150px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .arrow-down {
+            text-align: center;
+            color: #4285f4;
+            font-size: 2em;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏗️ GCP Enterprise Architecture</h1>
+            <p>GlobalMart Inc. - Big Data Platform (2025)</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">Multi-Region | Zero Trust Security | Cloud-Native | Cost-Optimized</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('overview')">📊 Overview</button>
+            <button class="nav-tab" onclick="showTab('network')">🌐 Network</button>
+            <button class="nav-tab" onclick="showTab('compute')">💻 Compute</button>
+            <button class="nav-tab" onclick="showTab('data')">📁 Data</button>
+            <button class="nav-tab" onclick="showTab('security')">🔒 Security</button>
+            <button class="nav-tab" onclick="showTab('observability')">📈 Observability</button>
+            <button class="nav-tab" onclick="showTab('flow')">🔄 Data Flow</button>
+        </div>
+
+        <div class="content">
+            <!-- Overview Tab -->
+            <div id="overview" class="tab-content active">
+                <h2 style="margin-bottom: 20px; color: #4285f4;">Architecture Overview</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">GCP Projects</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">3</div>
+                        <div class="stat-label">Regions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">50TB</div>
+                        <div class="stat-label">Daily Data</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">99.95%</div>
+                        <div class="stat-label">Availability SLA</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$150K</div>
+                        <div class="stat-label">Monthly Cost</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">40%</div>
+                        <div class="stat-label">Cost Savings</div>
+                    </div>
+                </div>
+
+                <div class="architecture-diagram">
+                    <h3 style="margin-bottom: 20px; color: #2c3e50;">🏛️ Layered Architecture</h3>
+                    
+                    <!-- Internet / Users Layer -->
+                    <div class="layer">
+                        <div class="layer-title">
+                            <span class="icon">🌍</span>
+                            Internet / External Users
+                        </div>
+                        <div class="components">
+                            <div class="component tooltip">
+                                <div class="component-name">Global Users</div>
+                                <div class="component-desc">5000+ stores, 45 countries</div>
+                                <span class="tooltiptext">End users accessing the platform from retail stores, corporate offices, and partner locations worldwide.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">On-Premises Systems</div>
+                                <div class="component-desc">Legacy ERP, POS systems</div>
+                                <span class="tooltiptext">Existing on-premises infrastructure connected via Dedicated Interconnect and HA VPN for hybrid cloud operations.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="arrow-down">↓</div>
+
+                    <!-- Edge / Security Layer -->
+                    <div class="layer">
+                        <div class="layer-title">
+                            <span class="icon">🛡️</span>
+                            Edge & Security Layer
+                        </div>
+                        <div class="components">
+                            <div class="component tooltip">
+                                <div class="component-name">Cloud Armor</div>
+                                <div class="component-desc">WAF + DDoS Protection</div>
+                                <span class="tooltiptext">Protects against OWASP Top 10 attacks, rate limiting, geo-blocking, and adaptive DDoS protection with ML-based threat detection.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Cloud CDN</div>
+                                <div class="component-desc">Global content delivery</div>
+                                <span class="tooltiptext">Reduces latency by caching static content at edge locations worldwide with 1-hour TTL.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Global LB</div>
+                                <div class="component-desc">Application Load Balancer</div>
+                                <span class="tooltiptext">Global External Application Load Balancer with HTTPS/TLS 1.3, distributing traffic across us-central1 and europe-west1.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Cloud DNS</div>
+                                <div class="component-desc">Managed DNS service</div>
+                                <span class="tooltiptext">Authoritative DNS with DNSSEC for globalmart.com with 100% uptime SLA.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="arrow-down">↓</div>
+
+                    <!-- Network Layer -->
+                    <div class="layer">
+                        <div class="layer-title">
+                            <span class="icon">🌐</span>
+                            Network Layer (Shared VPC)
+                        </div>
+                        <div class="components">
+                            <div class="component tooltip">
+                                <div class="component-name">Host Project</div>
+                                <div class="component-desc">prd-network-hub-001</div>
+                                <span class="tooltiptext">Centralized network management with Shared VPC hosting subnets for all service projects.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">VPC Peering</div>
+                                <div class="component-desc">Multi-project connectivity</div>
+                                <span class="tooltiptext">Enables private communication between service projects without using external IPs.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Cloud NAT</div>
+                                <div class="component-desc">Outbound internet access</div>
+                                <span class="tooltiptext">Provides managed NAT gateway for resources without external IPs to access internet securely.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Interconnect</div>
+                                <div class="component-desc">100Gbps dedicated link</div>
+                                <span class="tooltiptext">Dedicated Interconnect from LAX and IAD for low-latency, high-bandwidth connectivity to on-premises.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="arrow-down">↓</div>
+
+                    <!-- Compute Layer -->
+                    <div class="layer">
+                        <div class="layer-title">
+                            <span class="icon">💻</span>
+                            Compute & Processing Layer
+                        </div>
+                        <div class="components">
+                            <div class="component tooltip">
+                                <div class="component-name">GKE Clusters</div>
+                                <div class="component-desc">Kubernetes workloads</div>
+                                <span class="tooltiptext">Standard GKE clusters with 3 node pools: system (n2-standard-4), data (n2-highmem-8), spot (n2-standard-16). Autoscales 5-50 nodes.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Dataflow</div>
+                                <div class="component-desc">Stream + Batch processing</div>
+                                <span class="tooltiptext">Unified processing for real-time (Pub/Sub) and batch (BigQuery) data pipelines with autoscaling workers.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Dataproc</div>
+                                <div class="component-desc">Managed Spark/Hadoop</div>
+                                <span class="tooltiptext">Ephemeral clusters for batch ETL with 80% spot VMs. Auto-deletes after 1 hour idle.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Cloud Run</div>
+                                <div class="component-desc">Serverless containers</div>
+                                <span class="tooltiptext">15 containerized services with automatic scaling to zero and built-in load balancing.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Cloud Functions</div>
+                                <div class="component-desc">Event-driven compute</div>
+                                <span class="tooltiptext">30 serverless functions for data validation, transformations, and triggers.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Vertex AI</div>
+                                <div class="component-desc">ML training & serving</div>
+                                <span class="tooltiptext">Managed ML platform with 10 Workbench instances, training pipelines, and 8 model endpoints.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="arrow-down">↓</div>
+
+                    <!-- Data Layer -->
+                    <div class="layer">
+                        <div class="layer-title">
+                            <span class="icon">📁</span>
+                            Data Storage Layer
+                        </div>
+                        <div class="components">
+                            <div class="component tooltip">
+                                <div class="component-name">BigQuery</div>
+                                <div class="component-desc">Data warehouse (5PB)</div>
+                                <span class="tooltiptext">Serverless data warehouse with 2000 baseline slots, autoscaling to 5000. Partitioned/clustered tables for optimal performance.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Cloud Storage</div>
+                                <div class="component-desc">Object storage (10PB)</div>
+                                <span class="tooltiptext">15 buckets with lifecycle policies: Standard → Nearline (7d) → Coldline (90d) → Archive (365d). Turbo replication enabled.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Bigtable</div>
+                                <div class="component-desc">NoSQL time-series</div>
+                                <span class="tooltiptext">Production instance with 10-30 autoscaling nodes on SSD. Multi-cluster replication for 99.99% availability.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Cloud Spanner</div>
+                                <div class="component-desc">Global RDBMS</div>
+                                <span class="tooltiptext">Multi-region (nam6) with 1000-5000 autoscaling processing units. Handles transactional workloads with 99.999% availability.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Cloud SQL</div>
+                                <div class="component-desc">Managed PostgreSQL</div>
+                                <span class="tooltiptext">HA configuration with read replicas for metadata and configuration management.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Pub/Sub</div>
+                                <div class="component-desc">Message streaming</div>
+                                <span class="tooltiptext">25 topics, 40 subscriptions with exactly-once delivery, dead letter queues, and schema validation.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="arrow-down">↓</div>
+
+                    <!-- Analytics & ML Layer -->
+                    <div class="layer">
+                        <div class="layer-title">
+                            <span class="icon">📊</span>
+                            Analytics & ML Layer
+                        </div>
+                        <div class="components">
+                            <div class="component tooltip">
+                                <div class="component-name">Looker</div>
+                                <div class="component-desc">Business intelligence</div>
+                                <span class="tooltiptext">Self-service BI platform for 50+ dashboards and 200+ reports used by analysts.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Data Studio</div>
+                                <div class="component-desc">Visualization</div>
+                                <span class="tooltiptext">Real-time dashboards connected to BigQuery for executive reporting.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Vertex AI Models</div>
+                                <div class="component-desc">ML inference</div>
+                                <span class="tooltiptext">8 deployed models with 2-10 autoscaling replicas each for predictions.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">BigQuery ML</div>
+                                <div class="component-desc">In-database ML</div>
+                                <span class="tooltiptext">SQL-based ML models for quick experimentation and production scoring.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="arrow-down">↓</div>
+
+                    <!-- Cross-cutting Concerns -->
+                    <div class="layer">
+                        <div class="layer-title">
+                            <span class="icon">🔧</span>
+                            Cross-Cutting Services
+                        </div>
+                        <div class="components">
+                            <div class="component tooltip">
+                                <div class="component-name">Cloud Monitoring</div>
+                                <div class="component-desc">Observability platform</div>
+                                <span class="tooltiptext">Unified monitoring with 50+ custom dashboards, 100+ alert policies, and SLO tracking.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Cloud Logging</div>
+                                <div class="component-desc">Log aggregation</div>
+                                <span class="tooltiptext">Centralized logging with 3 log sinks: BigQuery (analytics), GCS (archive), Pub/Sub (SIEM).</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Cloud KMS</div>
+                                <div class="component-desc">Key management</div>
+                                <span class="tooltiptext">Customer-Managed Encryption Keys (CMEK) for all data at rest with 90-day rotation.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">Secret Manager</div>
+                                <div class="component-desc">Secrets storage</div>
+                                <span class="tooltiptext">Encrypted storage for API keys, passwords, and certificates with automatic rotation.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">IAM</div>
+                                <div class="component-desc">Identity & access</div>
+                                <span class="tooltiptext">Centralized access control with 12 Google Groups, custom roles, and Context-Aware Access.</span>
+                            </div>
+                            <div class="component tooltip">
+                                <div class="component-name">VPC Service Controls</div>
+                                <div class="component-desc">Data perimeter</div>
+                                <span class="tooltiptext">Prevents data exfiltration with enforced perimeter around production projects.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="explanation-section">
+                    <h3>📋 Why This Architecture?</h3>
+                    <ul>
+                        <li><strong>Layered Design:</strong> Separation of concerns with clear boundaries between networking, compute, data, and security layers for maintainability and scalability.</li>
+                        <li><strong>Hub-and-Spoke Network:</strong> Centralized network management reduces complexity while allowing service projects isolation and independent scaling.</li>
+                        <li><strong>Zero Trust Security:</strong> Multiple security layers (Cloud Armor, VPC-SC, IAM, encryption) ensure defense-in-depth approach with no implicit trust.</li>
+                        <li><strong>Multi-Region:</strong> Active-active deployment across 3 regions (us-central1 primary, europe-west1, asia-southeast1) for high availability and disaster recovery.</li>
+                        <li><strong>Managed Services:</strong> Leveraging GCP managed services (BigQuery, Dataflow, GKE) reduces operational overhead and improves reliability.</li>
+                        <li><strong>Cost Optimization:</strong> Spot VMs (60-90% savings), autoscaling, lifecycle policies, and committed use discounts achieve 40% cost reduction.</li>
+                        <li><strong>Hybrid Connectivity:</strong> Dedicated Interconnect (100Gbps) + HA VPN provides reliable, low-latency connection to on-premises systems.</li>
+                        <li><strong>Data Governance:</strong> DLP scanning, encryption at rest/transit, VPC Service Controls, and audit logging ensure compliance (GDPR, PCI-DSS).</li>
+                    </ul>
+                </div>
+
+                <div class="benefit-box">
+                    <h3>✅ Key Benefits Achieved</h3>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>99.95% Availability:</strong> Multi-region active-active with automated failover and health checks</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>RPO < 1 hour, RTO < 4 hours:</strong> Continuous replication and tested disaster recovery procedures</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>40% Cost Savings:</strong> $255K annual savings through optimization (CUDs, Spot VMs, lifecycle policies)</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>50TB Daily Processing:</strong> Handles massive data volumes with autoscaling compute and storage</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Zero Trust Security:</strong> Context-Aware Access, VPC-SC, and defense-in-depth protect sensitive data</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>100% IaC:</strong> All infrastructure managed via Terraform for consistency and version control</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Network Tab -->
+            <div id="network" class="tab-content">
+                <h2 style="margin-bottom: 20px; color: #4285f4;">🌐 Network Architecture</h2>
+                
+                <div class="explanation-section">
+                    <h3>Why Shared VPC Hub-and-Spoke?</h3>
+                    <ul>
+                        <li><strong>Centralized Network Management:</strong> Single pane of glass for firewall rules, VPN, and load balancers reduces complexity</li>
+                        <li><strong>Cost Efficiency:</strong> Shared networking infrastructure (NAT, Interconnect, Load Balancers) reduces duplicate resources</li>
+                        <li><strong>Security Isolation:</strong> Service projects can't modify network policies, enforcing governance</li>
+                        <li><strong>Simplified Billing:</strong> Network egress charges consolidated in host project for accurate cost allocation</li>
+                        <li><strong>Scalability:</strong> New service projects can be added without redesigning network architecture</li>
+                    </ul>
+                </div>
+
+                <div class="network-diagram">
+                    <h3 style="margin-bottom: 15px;">Hub-and-Spoke Topology</h3>
+                    
+                    <div class="network-layer">
+                        <div class="network-header">🎯 Host Project: prd-network-hub-001</div>
+                        <p style="margin-bottom: 10px; color: #5a6c7d;">VPC: vpc-prd-shared-global-001 (Global routing)</p>
+                        
+                        <div style="margin-top: 15px;">
+                            <strong>Region: us-central1 (PRIMARY)</strong>
+                            <div class="subnet-grid">
+                                <div class="subnet">
+                                    <div class="subnet-name">subnet-prd-data-uc1-001</div>
+                                    <div class="subnet-cidr">10.10.0.0/24</div>
+                                </div>
+                                <div class="subnet">
+                                    <div class="subnet-name">subnet-prd-compute-uc1-001</div>
+                                    <div class="subnet-cidr">10.10.1.0/24</div>
+                                </div>
+                                <div class="subnet">
+                                    <div class="subnet-name">subnet-prd-ml-uc1-001</div>
+                                    <div class="subnet-cidr">10.10.2.0/24</div>
+                                </div>
+                                <div class="subnet">
+                                    <div class="subnet-name">subnet-prd-web-uc1-001</div>
+                                    <div class="subnet-cidr">10.10.3.0/24</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 15px;">
+                            <strong>Region: europe-west1 (SECONDARY)</strong>
+                            <div class="subnet-grid">
+                                <div class="subnet">
+                                    <div class="subnet-name">subnet-prd-data-ew1-001</div>
+                                    <div class="subnet-cidr">10.20.0.0/24</div>
+                                </div>
+                                <div class="subnet">
+                                    <div class="subnet-name">subnet-prd-compute-ew1-001</div>
+                                    <div class="subnet-cidr">10.20.1.0/24</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 15px;">
+                            <strong>Region: asia-southeast1 (SECONDARY)</strong>
+                            <div class="subnet-grid">
+                                <div class="subnet">
+                                    <div class="subnet-name">subnet-prd-data-as1-001</div>
+                                    <div class="subnet-cidr">10.30.0.0/24</div>
+                                </div>
+                                <div class="subnet">
+                                    <div class="subnet-name">subnet-prd-compute-as1-001</div>
+                                    <div class="subnet-cidr">10.30.1.0/24</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="arrow-down">↓ Shared VPC Attachment ↓</div>
+
+                    <div class="network-layer">
+                        <div class="network-header">🔌 Service Projects (Spokes)</div>
+                        <div class="components">
+                            <div class="component">
+                                <div class="component-name">prd-data-platform-001</div>
+                                <div class="component-desc">Attached to data subnets</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">prd-ml-platform-001</div>
+                                <div class="component-desc">Attached to ml subnets</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">prd-streaming-platform-001</div>
+                                <div class="component-desc">Attached to compute subnets</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">prd-compute-platform-001</div>
+                                <div class="component-desc">Attached to web + compute</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="benefit-box">
+                    <h3>✅ Network Architecture Benefits</h3>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Private Google Access:</strong> All subnets enabled for accessing GCP APIs without public IPs</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Cloud NAT:</strong> Managed NAT gateway in each region for secure internet egress (no external IPs on VMs)</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Global Load Balancing:</strong> Single anycast IP serving traffic from nearest Google edge location</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Dedicated Interconnect:</strong> 100Gbps with 99.99% SLA for on-premises connectivity</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>HA VPN Backup:</strong> Redundant VPN tunnels with BGP for failover</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Private Service Connect:</strong> Private IPs for accessing Google APIs (BigQuery, Storage, Vertex AI)</div>
+                    </div>
+                </div>
+
+                <div class="explanation-section">
+                    <h3>🔥 Firewall Strategy: Defense in Depth</h3>
+                    <ul>
+                        <li><strong>Hierarchical Policies:</strong> Organization-level policies (block SSH from internet) inherited by all projects</li>
+                        <li><strong>IAP for SSH:</strong> Identity-Aware Proxy eliminates need for bastion hosts or VPNs for admin access</li>
+                        <li><strong>Zero External IPs:</strong> All compute resources use private IPs only, egress via Cloud NAT</li>
+                        <li><strong>Micro-segmentation:</strong> Network tags (dataproc-cluster, gke-cluster) enable fine-grained firewall rules</li>
+                        <li><strong>Default Deny:</strong> Implicit deny rule at priority 65534 ensures whitelist-only approach</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Compute Tab -->
+            <div id="compute" class="tab-content">
+                <h2 style="margin-bottom: 20px; color: #4285f4;">💻 Compute Architecture</h2>
+                
+                <div class="explanation-section">
+                    <h3>Why This Compute Strategy?</h3>
+                    <ul>
+                        <li><strong>GKE for Microservices:</strong> Container orchestration with autoscaling, rolling updates, and service mesh capabilities</li>
+                        <li><strong>Dataflow for Pipelines:</strong> Unified batch + streaming processing with Apache Beam, auto-scaling workers</li>
+                        <li><strong>Dataproc for Spark:</strong> Managed Spark/Hadoop for legacy big data workloads with ephemeral clusters</li>
+                        <li><strong>Spot VMs for Batch:</strong> 60-90% cost savings for fault-tolerant workloads (Dataproc secondary workers)</li>
+                        <li><strong>Serverless (Cloud Run/Functions):</strong> Pay-per-use for event-driven workloads, automatic scaling to zero</li>
+                        <li><strong>Vertex AI for ML:</strong> Managed Jupyter notebooks, training pipelines, and model serving with autoscaling</li>
+                    </ul>
+                </div>
+
+                <div class="architecture-diagram">
+                    <h3 style="margin-bottom: 20px;">GKE Cluster Architecture</h3>
+                    
+                    <div class="component" style="margin-bottom: 20px; background: #e8f5e9;">
+                        <div class="component-name" style="color: #2e7d32;">GKE Standard Cluster: gke-prd-standard-uc1-001</div>
+                        <div class="component-desc">Location: us-central1 (3 zones) | Release Channel: REGULAR</div>
+                    </div>
+
+                    <div class="components">
+                        <div class="component">
+                            <div class="component-name">System Node Pool</div>
+                            <div class="component-desc">
+                                <strong>Machine:</strong> n2-standard-4<br>
+                                <strong>Nodes:</strong> 3-10 (autoscale)<br>
+                                <strong>Taint:</strong> workload=system
+                            </div>
+                        </div>
+                        <div class="component">
+                            <div class="component-name">Data Node Pool</div>
+                            <div class="component-desc">
+                                <strong>Machine:</strong> n2-highmem-8<br>
+                                <strong>Nodes:</strong> 5-50 (autoscale)<br>
+                                <strong>Use:</strong> Data workloads
+                            </div>
+                        </div>
+                        <div class="component">
+                            <div class="component-name">Spot Node Pool</div>
+                            <div class="component-desc">
+                                <strong>Machine:</strong> n2-standard-16<br>
+                                <strong>Nodes:</strong> 0-100 (autoscale)<br>
+                                <strong>Savings:</strong> 60-90%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="architecture-diagram">
+                    <h3 style="margin-bottom: 20px;">Dataproc Cluster Strategy</h3>
+                    
+                    <div class="component" style="margin-bottom: 20px; background: #fff3e0;">
+                        <div class="component-name" style="color: #e65100;">Ephemeral Clusters</div>
+                        <div class="component-desc">Created on-demand, auto-deleted after 1 hour idle</div>
+                    </div>
+
+                    <div class="components">
+                        <div class="component">
+                            <div class="component-name">Master Nodes</div>
+                            <div class="component-desc">
+                                <strong>Count:</strong> 1<br>
+                                <strong>Machine:</strong> n2-standard-16<br>
+                                <strong>Disk:</strong> 500GB pd-balanced
+                            </div>
+                        </div>
+                        <div class="component">
+                            <div class="component-name">Primary Workers</div>
+                            <div class="component-desc">
+                                <strong>Count:</strong> 10<br>
+                                <strong>Machine:</strong> n2-standard-16<br>
+                                <strong>Disk:</strong> 500GB pd-standard
+                            </div>
+                        </div>
+                        <div class="component">
+                            <div class="component-name">Secondary Workers (Spot)</div>
+                            <div class="component-desc">
+                                <strong>Count:</strong> 20<br>
+                                <strong>Machine:</strong> n2-standard-16<br>
+                                <strong>Cost:</strong> 60-90% cheaper
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="benefit-box">
+                    <h3>✅ Compute Architecture Benefits</h3>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Workload Identity:</strong> GKE pods use service account impersonation instead of service account keys</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Binary Authorization:</strong> Only signed container images can run on GKE clusters</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Shielded Nodes:</strong> Secure Boot, vTPM, and integrity monitoring protect against rootkits</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Autoscaling:</strong> Horizontal Pod Autoscaler, Cluster Autoscaler, and Vertical Pod Autoscaler optimize costs</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Spot VMs:</strong> Used for 80% of batch workloads (Dataproc, GKE batch jobs) saving $120K annually</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Multi-zone:</strong> GKE and MIGs spread across 3 zones for 99.95% availability</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Tab -->
+            <div id="data" class="tab-content">
+                <h2 style="margin-bottom: 20px; color: #4285f4;">📁 Data Architecture</h2>
+                
+                <div class="explanation-section">
+                    <h3>Why This Data Storage Strategy?</h3>
+                    <ul>
+                        <li><strong>BigQuery for Analytics:</strong> Serverless, petabyte-scale data warehouse with sub-second queries on partitioned/clustered tables</li>
+                        <li><strong>Cloud Storage for Data Lake:</strong> Cost-effective object storage with lifecycle policies (Standard → Nearline → Coldline → Archive)</li>
+                        <li><strong>Bigtable for Time-Series:</strong> Low-latency NoSQL for high-throughput writes (user events, clickstream)</li>
+                        <li><strong>Cloud Spanner for Transactions:</strong> Globally distributed RDBMS with strong consistency and 99.999% availability</li>
+                        <li><strong>Pub/Sub for Streaming:</strong> At-least-once or exactly-once delivery with global message ordering</li>
+                        <li><strong>Medallion Architecture:</strong> Bronze (raw) → Silver (processed) → Gold (curated) data organization</li>
+                    </ul>
+                </div>
+
+                <div class="architecture-diagram">
+                    <h3 style="margin-bottom: 20px;">Data Storage Tiers</h3>
+                    
+                    <div class="layer">
+                        <div class="layer-title">
+                            <span class="icon">🥉</span>
+                            Bronze Layer (Raw Data)
+                        </div>
+                        <div class="components">
+                            <div class="component">
+                                <div class="component-name">Cloud Storage - Landing</div>
+                                <div class="component-desc">
+                                    <strong>Bucket:</strong> gcs-prd-raw-landing-uc1-001<br>
+                                    <strong>Class:</strong> Standard<br>
+                                    <strong>Size:</strong> ~1PB<br>
+                                    <strong>Lifecycle:</strong> 7d → Nearline
+                                </div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Pub/Sub Topics</div>
+                                <div class="component-desc">
+                                    <strong>Count:</strong> 25 topics<br>
+                                    <strong>Features:</strong> Schema validation, DLQ<br>
+                                    <strong>Volume:</strong> 100M messages/day
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="arrow-down">↓ Dataflow ETL ↓</div>
+
+                    <div class="layer">
+                        <div class="layer-title">
+                            <span class="icon">🥈</span>
+                            Silver Layer (Processed Data)
+                        </div>
+                        <div class="components">
+                            <div class="component">
+                                <div class="component-name">Cloud Storage - Processed</div>
+                                <div class="component-desc">
+                                    <strong>Bucket:</strong> gcs-prd-processed-silver-multi-001<br>
+                                    <strong>Class:</strong> Standard<br>
+                                    <strong>Replication:</strong> Turbo (RPO <15min)
+                                </div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">BigQuery - Processed</div>
+                                <div class="component-desc">
+                                    <strong>Dataset:</strong> bq_prd_retail_processed<br>
+                                    <strong>Tables:</strong> Partitioned + Clustered<br>
+                                    <strong>Size:</strong> ~2PB
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="arrow-down">↓ Aggregation & Modeling ↓</div>
+
+                    <div class="layer">
+                        <div class="layer-title">
+                            <span class="icon">🥇</span>
+                            Gold Layer (Curated Data)
+                        </div>
+                        <div class="components">
+                            <div class="component">
+                                <div class="component-name">BigQuery - Analytics</div>
+                                <div class="component-desc">
+                                    <strong>Dataset:</strong> bq_prd_retail_analytics<br>
+                                    <strong>Tables:</strong> Star schema (facts + dims)<br>
+                                    <strong>Views:</strong> Materialized views
+                                </div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Cloud Storage - Curated</div>
+                                <div class="component-desc">
+                                    <strong>Bucket:</strong> gcs-prd-curated-gold-multi-001<br>
+                                    <strong>Format:</strong> Parquet, Avro<br>
+                                    <strong>Use:</strong> ML features, reports
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="architecture-diagram">
+                    <h3 style="margin-bottom: 20px;">BigQuery Dataset Architecture</h3>
+                    
+                    <div class="components">
+                        <div class="component" style="background: #e3f2fd;">
+                            <div class="component-name">bq_prd_retail_analytics</div>
+                            <div class="component-desc">
+                                <strong>Size:</strong> 1.5PB<br>
+                                <strong>Tables:</strong> sales_fact, customer_dim, product_dim<br>
+                                <strong>Partition:</strong> DAY on transaction_date<br>
+                                <strong>Cluster:</strong> store_key, product_key
+                            </div>
+                        </div>
+                        <div class="component" style="background: #f3e5f5;">
+                            <div class="component-name">bq_prd_ml_features</div>
+                            <div class="component-desc">
+                                <strong>Size:</strong> 500TB<br>
+                                <strong>Tables:</strong> customer_features_daily<br>
+                                <strong>Use:</strong> ML model training
+                            </div>
+                        </div>
+                        <div class="component" style="background: #e8f5e9;">
+                            <div class="component-name">bq_prd_streaming_realtime</div>
+                            <div class="component-desc">
+                                <strong>Size:</strong> 200TB<br>
+                                <strong>Tables:</strong> clickstream_events<br>
+                                <strong>Use:</strong> Real-time dashboards
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="benefit-box">
+                    <h3>✅ Data Architecture Benefits</h3>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>2000 Baseline Slots:</strong> BigQuery flat-rate pricing with autoscaling to 5000 slots for Enterprise Plus</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Partition Pruning:</strong> 10-100x faster queries and 90% cost reduction by scanning only relevant partitions</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Storage Lifecycle:</strong> Automatic transitions save $50K annually (Standard → Nearline → Coldline → Archive)</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Turbo Replication:</strong> RPO <15 minutes for critical data across regions</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Bigtable Autoscaling:</strong> 10-30 nodes based on CPU (70% target) handles traffic spikes efficiently</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Spanner Multi-Region:</strong> 99.999% availability with automatic failover across 3 regions</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Tab -->
+            <div id="security" class="tab-content">
+                <h2 style="margin-bottom: 20px; color: #4285f4;">🔒 Security Architecture</h2>
+                
+                <div class="explanation-section">
+                    <h3>Why Zero Trust Security Model?</h3>
+                    <ul>
+                        <li><strong>Never Trust, Always Verify:</strong> No implicit trust based on network location; every request is authenticated and authorized</li>
+                        <li><strong>Defense in Depth:</strong> Multiple security layers (network, identity, data, application) protect against breaches</li>
+                        <li><strong>Least Privilege:</strong> Users and services get minimum permissions needed; time-bound access with JIT</li>
+                        <li><strong>Assume Breach:</strong> Architecture designed to limit blast radius if one component is compromised</li>
+                        <li><strong>Continuous Verification:</strong> Context-Aware Access checks device posture, location, and user on every request</li>
+                    </ul>
+                </div>
+
+                <div class="security-layer">
+                    <h3>🛡️ Multi-Layer Security Controls</h3>
+                    
+                    <div class="security-controls">
+                        <div class="security-control">
+                            <div class="control-name">Cloud Armor (L7 WAF)</div>
+                            <div class="control-desc">
+                                ✓ OWASP Top 10 protection<br>
+                                ✓ Rate limiting (100 req/min)<br>
+                                ✓ Geo-blocking<br>
+                                ✓ Adaptive DDoS protection
+                            </div>
+                        </div>
+                        <div class="security-control">
+                            <div class="control-name">VPC Service Controls</div>
+                            <div class="control-desc">
+                                ✓ Data perimeter enforcement<br>
+                                ✓ Prevents data exfiltration<br>
+                                ✓ Ingress/egress policies<br>
+                                ✓ Context-based access
+                            </div>
+                        </div>
+                        <div class="security-control">
+                            <div class="control-name">IAM & Context-Aware Access</div>
+                            <div class="control-desc">
+                                ✓ Group-based permissions<br>
+                                ✓ Custom roles<br>
+                                ✓ Device posture checks<br>
+                                ✓ Corporate network requirement
+                            </div>
+                        </div>
+                        <div class="security-control">
+                            <div class="control-name">Cloud KMS (CMEK)</div>
+                            <div class="control-desc">
+                                ✓ All data encrypted at rest<br>
+                                ✓ 90-day key rotation<br>
+                                ✓ HSM for sensitive keys<br>
+                                ✓ Audit logging
+                            </div>
+                        </div>
+                        <div class="security-control">
+                            <div class="control-name">DLP (Data Loss Prevention)</div>
+                            <div class="control-desc">
+                                ✓ Daily PII scanning<br>
+                                ✓ Credit card detection<br>
+                                ✓ Auto-redaction<br>
+                                ✓ Findings to BigQuery
+                            </div>
+                        </div>
+                        <div class="security-control">
+                            <div class="control-name">Security Command Center</div>
+                            <div class="control-desc">
+                                ✓ Vulnerability scanning<br>
+                                ✓ Threat detection (ML-based)<br>
+                                ✓ Container scanning<br>
+                                ✓ SIEM integration
+                            </div>
+                        </div>
+                        <div class="security-control">
+                            <div class="control-name">Binary Authorization</div>
+                            <div class="control-desc">
+                                ✓ Only signed images on GKE<br>
+                                ✓ Attestation required<br>
+                                ✓ Supply chain security<br>
+                                ✓ Policy enforcement
+                            </div>
+                        </div>
+                        <div class="security-control">
+                            <div class="control-name">Shielded VMs</div>
+                            <div class="control-desc">
+                                ✓ Secure Boot enabled<br>
+                                ✓ vTPM for integrity<br>
+                                ✓ Measured boot<br>
+                                ✓ Rootkit protection
+                            </div>
+                        </div>
+                        <div class="security-control">
+                            <div class="control-name">OS Login</div>
+                            <div class="control-desc">
+                                ✓ No SSH keys on VMs<br>
+                                ✓ IAM-based SSH access<br>
+                                ✓ 2FA required<br>
+                                ✓ Audit logs
+                            </div>
+                        </div>
+                        <div class="security-control">
+                            <div class="control-name">Private Service Connect</div>
+                            <div class="control-desc">
+                                ✓ Private IPs for APIs<br>
+                                ✓ No internet exposure<br>
+                                ✓ VPC firewall protection<br>
+                                ✓ Reduced attack surface
+                            </div>
+                        </div>
+                        <div class="security-control">
+                            <div class="control-name">Workload Identity</div>
+                            <div class="control-desc">
+                                ✓ No service account keys<br>
+                                ✓ Pod-level permissions<br>
+                                ✓ Automatic rotation<br>
+                                ✓ Kubernetes-native
+                            </div>
+                        </div>
+                        <div class="security-control">
+                            <div class="control-name">Certificate Authority Service</div>
+                            <div class="control-desc">
+                                ✓ Private root CA<br>
+                                ✓ Subordinate CAs<br>
+                                ✓ 1-year cert lifetime<br>
+                                ✓ Auto-rotation
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="benefit-box">
+                    <h3>✅ Security Architecture Benefits</h3>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Zero Data Breaches:</strong> Multi-layer defense has prevented all attempted intrusions</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Compliance Ready:</strong> GDPR, PCI-DSS, SOC 2, ISO 27001 compliant architecture</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Automated Threat Detection:</strong> ML-based anomaly detection finds threats in real-time</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>No Service Account Keys:</strong> Workload Identity eliminates key management overhead</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Data Perimeter:</strong> VPC-SC prevents 100% of data exfiltration attempts</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Audit Trail:</strong> Every access logged to immutable storage for forensics</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Observability Tab -->
+            <div id="observability" class="tab-content">
+                <h2 style="margin-bottom: 20px; color: #4285f4;">📈 Observability Architecture</h2>
+                
+                <div class="explanation-section">
+                    <h3>Why Comprehensive Observability?</h3>
+                    <ul>
+                        <li><strong>Proactive Issue Detection:</strong> Find problems before users report them through SLO monitoring and anomaly detection</li>
+                        <li><strong>Faster MTTR:</strong> Reduce mean time to resolution with correlated metrics, logs, and traces</li>
+                        <li><strong>Capacity Planning:</strong> Predictive analytics on resource utilization prevents outages</li>
+                        <li><strong>Cost Attribution:</strong> Detailed logging enables accurate cost allocation by team and project</li>
+                        <li><strong>Compliance:</strong> Audit logs retained for 7 years meet regulatory requirements</li>
+                    </ul>
+                </div>
+
+                <div class="architecture-diagram">
+                    <h3 style="margin-bottom: 20px;">Three Pillars of Observability</h3>
+                    
+                    <div class="layer">
+                        <div class="layer-title">
+                            <span class="icon">📊</span>
+                            Metrics (Cloud Monitoring)
+                        </div>
+                        <div class="components">
+                            <div class="component">
+                                <div class="component-name">System Metrics</div>
+                                <div class="component-desc">
+                                    CPU, memory, disk, network<br>
+                                    GKE node/pod utilization<br>
+                                    Dataflow worker metrics
+                                </div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Application Metrics</div>
+                                <div class="component-desc">
+                                    Request latency (p50, p95, p99)<br>
+                                    Error rates by endpoint<br>
+                                    Custom business metrics
+                                </div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Data Metrics</div>
+                                <div class="component-desc">
+                                    BigQuery slot utilization<br>
+                                    Pub/Sub message backlog<br>
+                                    Bigtable read/write latency
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="layer">
+                        <div class="layer-title">
+                            <span class="icon">📝</span>
+                            Logs (Cloud Logging)
+                        </div>
+                        <div class="components">
+                            <div class="component">
+                                <div class="component-name">Audit Logs</div>
+                                <div class="component-desc">
+                                    Admin activity logs<br>
+                                    Data access logs<br>
+                                    Exported to BigQuery
+                                </div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Application Logs</div>
+                                <div class="component-desc">
+                                    Structured JSON logging<br>
+                                    Error tracking<br>
+                                    Correlation IDs
+                                </div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">System Logs</div>
+                                <div class="component-desc">
+                                    VPC Flow Logs<br>
+                                    Firewall logs<br>
+                                    Load balancer logs
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="layer">
+                        <div class="layer-title">
+                            <span class="icon">🔍</span>
+                            Traces (Cloud Trace)
+                        </div>
+                        <div class="components">
+                            <div class="component">
+                                <div class="component-name">Distributed Tracing</div>
+                                <div class="component-desc">
+                                    End-to-end request flow<br>
+                                    Latency breakdown<br>
+                                    10% sampling rate
+                                </div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Service Map</div>
+                                <div class="component-desc">
+                                    Dependency visualization<br>
+                                    Bottleneck identification<br>
+                                    Error propagation
+                                </div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Profiling</div>
+                                <div class="component-desc">
+                                    CPU profiling<br>
+                                    Heap profiling<br>
+                                    Performance optimization
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="architecture-diagram">
+                    <h3 style="margin-bottom: 20px;">SLI/SLO Monitoring</h3>
+                    
+                    <div class="components">
+                        <div class="component" style="background: #e8f5e9;">
+                            <div class="component-name">BigQuery Availability</div>
+                            <div class="component-desc">
+                                <strong>SLI:</strong> successful_queries / total_queries<br>
+                                <strong>SLO:</strong> 99.9% over 30 days<br>
+                                <strong>Error Budget:</strong> 43 minutes/month
+                            </div>
+                        </div>
+                        <div class="component" style="background: #e3f2fd;">
+                            <div class="component-name">API Latency</div>
+                            <div class="component-desc">
+                                <strong>SLI:</strong> p99 latency < 500ms<br>
+                                <strong>SLO:</strong> 99.5% of requests<br>
+                                <strong>Error Budget:</strong> 216 minutes/month
+                            </div>
+                        </div>
+                        <div class="component" style="background: #f3e5f5;">
+                            <div class="component-name">Dataflow Pipeline</div>
+                            <div class="component-desc">
+                                <strong>SLI:</strong> p95 latency < 60s<br>
+                                <strong>SLO:</strong> 95% of 5-min windows<br>
+                                <strong>Error Budget:</strong> 1 hour/day
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="benefit-box">
+                    <h3>✅ Observability Benefits</h3>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>50+ Custom Dashboards:</strong> Real-time visibility into platform health and performance</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>100+ Alert Policies:</strong> Automated notification via email, Slack, and PagerDuty</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>3 Log Sinks:</strong> BigQuery (analytics), GCS (archive), Pub/Sub (SIEM integration)</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>MTTR Reduced 60%:</strong> Correlated metrics/logs/traces enable faster troubleshooting</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Cost Anomaly Detection:</strong> 50% spike alerts prevent unexpected billing</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>7-Year Retention:</strong> Audit logs archived for compliance and forensics</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Flow Tab -->
+            <div id="flow" class="tab-content">
+                <h2 style="margin-bottom: 20px; color: #4285f4;">🔄 Data Flow Architecture</h2>
+                
+                <div class="explanation-section">
+                    <h3>Why This Data Flow Design?</h3>
+                    <ul>
+                        <li><strong>Lambda Architecture:</strong> Combines batch (accuracy) and streaming (speed) for comprehensive analytics</li>
+                        <li><strong>Pub/Sub Decoupling:</strong> Producers and consumers are independent; allows multiple subscribers per topic</li>
+                        <li><strong>Exactly-Once Delivery:</strong> Pub/Sub guarantees prevent duplicate processing in critical pipelines</li>
+                        <li><strong>Dead Letter Queues:</strong> Failed messages sent to DLQ for manual review and reprocessing</li>
+                        <li><strong>Medallion Architecture:</strong> Bronze → Silver → Gold data quality progression</li>
+                        <li><strong>Schema Evolution:</strong> Avro/Protobuf schemas allow backward-compatible changes</li>
+                    </ul>
+                </div>
+
+                <div class="flow-diagram">
+                    <h3 style="margin-bottom: 15px;">Real-Time Streaming Pipeline</h3>
+                    
+                    <div class="flow-step">
+                        <div class="flow-number">1</div>
+                        <div class="flow-content">
+                            <div class="flow-title">Data Ingestion</div>
+                            <div class="flow-desc">
+                                POS systems, mobile apps, IoT devices → Cloud Run API → Pub/Sub topics<br>
+                                <strong>Volume:</strong> 100M events/day<br>
+                                <strong>Validation:</strong> Schema enforcement at ingestion
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-number">2</div>
+                        <div class="flow-content">
+                            <div class="flow-title">Stream Processing</div>
+                            <div class="flow-desc">
+                                Dataflow reads from Pub/Sub → Data validation, enrichment, deduplication<br>
+                                <strong>Windowing:</strong> 5-minute tumbling windows<br>
+                                <strong>Workers:</strong> 10-50 autoscaling
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-number">3</div>
+                        <div class="flow-content">
+                            <div class="flow-title">Dual Write</div>
+                            <div class="flow-desc">
+                                Dataflow writes to BOTH BigQuery (analytics) and Bigtable (low-latency queries)<br>
+                                <strong>BigQuery:</strong> Streaming inserts (partition by hour)<br>
+                                <strong>Bigtable:</strong> Row key: user_id#reverse_timestamp
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-number">4</div>
+                        <div class="flow-content">
+                            <div class="flow-title">Real-Time Analytics</div>
+                            <div class="flow-desc">
+                                Looker Studio dashboards query BigQuery for near real-time insights<br>
+                                Web apps query Bigtable for sub-10ms latency user lookups<br>
+                                <strong>Latency:</strong> End-to-end < 60 seconds
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-diagram">
+                    <h3 style="margin-bottom: 15px;">Batch Processing Pipeline</h3>
+                    
+                    <div class="flow-step">
+                        <div class="flow-number">1</div>
+                        <div class="flow-content">
+                            <div class="flow-title">Data Landing</div>
+                            <div class="flow-desc">
+                                On-premises systems → Transfer Service → Cloud Storage landing bucket<br>
+                                <strong>Schedule:</strong> Daily at 2 AM<br>
+                                <strong>Format:</strong> CSV, JSON, Avro
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-number">2</div>
+                        <div class="flow-content">
+                            <div class="flow-title">Data Quality Checks</div>
+                            <div class="flow-desc">
+                                Cloud Functions triggered on GCS uploads → Run DLP scan + data validation<br>
+                                <strong>Checks:</strong> Schema, null values, duplicates, PII detection<br>
+                                <strong>Action:</strong> Pass → processing, Fail → alert + quarantine
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-number">3</div>
+                        <div class="flow-content">
+                            <div class="flow-title">ETL Processing</div>
+                            <div class="flow-desc">
+                                Cloud Composer (Airflow) orchestrates Dataproc Spark jobs<br>
+                                <strong>Cluster:</strong> Ephemeral (1 master, 10 workers, 20 spot)<br>
+                                <strong>Processing:</strong> Cleansing, transformation, aggregation
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-number">4</div>
+                        <div class="flow-content">
+                            <div class="flow-title">Load to Warehouse</div>
+                            <div class="flow-desc">
+                                Spark writes processed data to BigQuery partitioned tables<br>
+                                <strong>Method:</strong> Direct write (not via GCS)<br>
+                                <strong>Materialized Views:</strong> Auto-refresh hourly
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-number">5</div>
+                        <div class="flow-content">
+                            <div class="flow-title">Analytics & Reporting</div>
+                            <div class="flow-desc">
+                                Looker semantic layer → 50+ dashboards for business users<br>
+                                Scheduled queries → email reports daily<br>
+                                <strong>Users:</strong> 150+ analysts and executives
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flow-diagram">
+                    <h3 style="margin-bottom: 15px;">ML Pipeline</h3>
+                    
+                    <div class="flow-step">
+                        <div class="flow-number">1</div>
+                        <div class="flow-content">
+                            <div class="flow-title">Feature Engineering</div>
+                            <div class="flow-desc">
+                                BigQuery scheduled queries → Extract features from raw tables<br>
+                                Store in bq_prd_ml_features dataset<br>
+                                <strong>Schedule:</strong> Daily at 3 AM
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-number">2</div>
+                        <div class="flow-content">
+                            <div class="flow-title">Model Training</div>
+                            <div class="flow-desc">
+                                Vertex AI Pipeline triggered by Cloud Scheduler<br>
+                                Read features from BigQuery → Train model (AutoML or custom)<br>
+                                <strong>Compute:</strong> n1-highmem-8 with 1 GPU
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-number">3</div>
+                        <div class="flow-content">
+                            <div class="flow-title">Model Evaluation</div>
+                            <div class="flow-desc">
+                                Compare new model vs production baseline<br>
+                                <strong>Metrics:</strong> Accuracy, precision, recall, AUC<br>
+                                <strong>Decision:</strong> Deploy if metrics improved by 5%+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-number">4</div>
+                        <div class="flow-content">
+                            <div class="flow-title">Model Deployment</div>
+                            <div class="flow-desc">
+                                Upload to Vertex AI Model Registry<br>
+                                Deploy to endpoint with canary rollout (10% → 50% → 100%)<br>
+                                <strong>Replicas:</strong> 2-10 autoscaling
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flow-step">
+                        <div class="flow-number">5</div>
+                        <div class="flow-content">
+                            <div class="flow-title">Inference</div>
+                            <div class="flow-desc">
+                                Applications call Vertex AI endpoint via REST API<br>
+                                <strong>Latency:</strong> p99 < 100ms<br>
+                                <strong>Monitoring:</strong> Prediction drift detection
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="benefit-box">
+                    <h3>✅ Data Flow Benefits</h3>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Lambda Architecture:</strong> Best of both worlds - real-time speed + batch accuracy</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Exactly-Once Processing:</strong> No duplicates in critical financial pipelines</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>End-to-End <60s:</strong> Real-time insights from ingestion to dashboard</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Automated Orchestration:</strong> Cloud Composer manages 50+ DAGs with dependencies</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>ML in Production:</strong> 8 models deployed with automated retraining and canary rollouts</div>
+                    </div>
+                    <div class="benefit-item">
+                        <div class="benefit-icon">✓</div>
+                        <div><strong>Data Quality:</strong> DLP and validation prevent bad data from entering pipelines</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>GCP Enterprise Architecture - GlobalMart Inc.</strong></p>
+            <p>Document Version: 2.0 | Last Updated: January 2025</p>
+            <p>Owner: Platform Engineering Team | Contact: platform-team@globalmart.com</p>
+            <p style="margin-top: 20px; font-size: 0.9em;">
+                This architecture follows Google Cloud's 2025 best practices including:<br>
+                Zero Trust Security | Shared VPC Hub-Spoke | Multi-Region Active-Active | Infrastructure as Code
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(tab => tab.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

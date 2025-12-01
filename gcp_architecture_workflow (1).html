@@ -1,0 +1,2833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCP E-Commerce Architecture & Implementation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a73e8;
+            --secondary: #34a853;
+            --accent: #fbbc04;
+            --danger: #ea4335;
+            --dark: #202124;
+            --darker: #171717;
+            --light: #f8f9fa;
+            --gray: #5f6368;
+            --code-bg: #1e1e1e;
+            --success: #0f9d58;
+        }
+
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 60px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            margin-bottom: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.8s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 3.5em;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .subtitle {
+            font-size: 1.3em;
+            color: var(--gray);
+            font-weight: 300;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 25px;
+            border: none;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.95em;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            box-shadow: 0 10px 30px rgba(26, 115, 232, 0.4);
+        }
+
+        .tab-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .tab-btn:hover::before {
+            left: 100%;
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Architecture Flow */
+        .architecture-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .flow-section {
+            margin-bottom: 50px;
+        }
+
+        .flow-title {
+            font-size: 2.2em;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 30px;
+            font-family: 'Space Mono', monospace;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .flow-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 2px;
+        }
+
+        .flow-steps {
+            display: grid;
+            gap: 20px;
+        }
+
+        .flow-step {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e8eaed 100%);
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid var(--primary);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .flow-step:hover {
+            transform: translateX(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border-left-color: var(--secondary);
+        }
+
+        .flow-step::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(26, 115, 232, 0.1), transparent);
+            transition: left 0.6s;
+        }
+
+        .flow-step:hover::before {
+            left: 100%;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+            margin-right: 15px;
+            box-shadow: 0 5px 15px rgba(26, 115, 232, 0.3);
+        }
+
+        .step-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 10px;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .step-description {
+            color: var(--gray);
+            line-height: 1.8;
+            font-size: 1.05em;
+        }
+
+        .step-services {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .service-tag {
+            background: white;
+            color: var(--primary);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            border: 2px solid var(--primary);
+            font-family: 'Space Mono', monospace;
+        }
+
+        /* Architecture Diagram */
+        .architecture-diagram {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            margin-top: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .layer {
+            margin-bottom: 30px;
+            padding: 25px;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .layer-frontend {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-left: 5px solid #1976d2;
+        }
+
+        .layer-application {
+            background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+            border-left: 5px solid #7b1fa2;
+        }
+
+        .layer-data {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border-left: 5px solid #388e3c;
+        }
+
+        .layer-security {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            border-left: 5px solid #f57c00;
+        }
+
+        .layer-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .layer-components {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .component {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .component:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .component-name {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 5px;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .component-desc {
+            font-size: 0.85em;
+            color: var(--gray);
+        }
+
+        /* CLI Commands Section */
+        .cli-container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .phase {
+            margin-bottom: 50px;
+        }
+
+        .phase-title {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-family: 'Space Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .phase-number {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 50px;
+            font-size: 1.2em;
+            box-shadow: 0 5px 20px rgba(26, 115, 232, 0.4);
+        }
+
+        .step-container {
+            margin-bottom: 30px;
+        }
+
+        .step-header {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 15px;
+            font-family: 'Space Mono', monospace;
+            padding-left: 15px;
+            border-left: 4px solid var(--secondary);
+        }
+
+        .command-block {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .command-description {
+            color: var(--gray);
+            font-size: 0.95em;
+            margin-bottom: 10px;
+            padding-left: 10px;
+            font-style: italic;
+        }
+
+        .code-wrapper {
+            position: relative;
+            background: var(--code-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .code-header {
+            background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #444;
+        }
+
+        .code-title {
+            color: #888;
+            font-size: 0.85em;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .copy-btn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8em;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(26, 115, 232, 0.4);
+        }
+
+        .copy-btn.copied {
+            background: linear-gradient(135deg, var(--success), var(--secondary));
+        }
+
+        pre {
+            margin: 0;
+            padding: 20px;
+            overflow-x: auto;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        code {
+            color: #d4d4d4;
+        }
+
+        .syntax-comment {
+            color: #6a9955;
+        }
+
+        .syntax-command {
+            color: #4ec9b0;
+        }
+
+        .syntax-flag {
+            color: #ce9178;
+        }
+
+        .syntax-value {
+            color: #9cdcfe;
+        }
+
+        /* Info Boxes */
+        .info-box {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-left: 5px solid var(--primary);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .info-box.warning {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            border-left-color: var(--accent);
+        }
+
+        .info-box.success {
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border-left-color: var(--secondary);
+        }
+
+        .info-title {
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-family: 'Space Mono', monospace;
+            font-size: 1.1em;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .subtitle {
+                font-size: 1em;
+            }
+
+            .tab-btn {
+                min-width: 120px;
+                padding: 12px 15px;
+                font-size: 0.85em;
+            }
+
+            .flow-title, .phase-title {
+                font-size: 1.5em;
+            }
+
+            .architecture-container, .cli-container {
+                padding: 20px;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GCP Architecture</h1>
+            <p class="subtitle">E-Commerce Platform Migration & Implementation</p>
+        </header>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('workflow')">Architectural Workflow</button>
+            <button class="tab-btn" onclick="switchTab('setup')">Initial Setup</button>
+            <button class="tab-btn" onclick="switchTab('networking')">Networking</button>
+            <button class="tab-btn" onclick="switchTab('compute')">Compute & GKE</button>
+            <button class="tab-btn" onclick="switchTab('database')">Database</button>
+            <button class="tab-btn" onclick="switchTab('storage')">Storage</button>
+            <button class="tab-btn" onclick="switchTab('loadbalancer')">Load Balancer</button>
+            <button class="tab-btn" onclick="switchTab('security')">Security</button>
+            <button class="tab-btn" onclick="switchTab('verification')">Verification</button>
+        </div>
+
+        <!-- Architectural Workflow Section -->
+        <div id="workflow" class="content-section active">
+            <div class="architecture-container">
+                <div class="flow-section">
+                    <h2 class="flow-title">End-to-End Request Flow</h2>
+                    
+                    <div class="flow-steps">
+                        <div class="flow-step">
+                            <span class="step-number">1</span>
+                            <div>
+                                <h3 class="step-title">User Request Initiation</h3>
+                                <p class="step-description">
+                                    User sends HTTPS request to www.shopglobal.com. DNS resolves to Cloud Load Balancer's global anycast IP address. Static content (images, CSS, JS) served directly from Cloud CDN edge locations for minimal latency.
+                                </p>
+                                <div class="step-services">
+                                    <span class="service-tag">Cloud CDN</span>
+                                    <span class="service-tag">Cloud DNS</span>
+                                    <span class="service-tag">Global Load Balancer</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flow-step">
+                            <span class="step-number">2</span>
+                            <div>
+                                <h3 class="step-title">Security Layer Processing</h3>
+                                <p class="step-description">
+                                    Cloud Armor inspects incoming traffic for DDoS attacks and malicious patterns. SSL/TLS termination occurs at the load balancer. Security policies filter requests based on geolocation, IP reputation, and attack signatures. Rate limiting enforced to prevent abuse.
+                                </p>
+                                <div class="step-services">
+                                    <span class="service-tag">Cloud Armor</span>
+                                    <span class="service-tag">SSL Certificates</span>
+                                    <span class="service-tag">IAP</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flow-step">
+                            <span class="step-number">3</span>
+                            <div>
+                                <h3 class="step-title">Load Balancing & Routing</h3>
+                                <p class="step-description">
+                                    Global HTTP(S) Load Balancer routes request to nearest healthy backend service. Backend selection based on: geographic proximity, instance health status, and current load utilization. Backend can be: GKE cluster, Compute Engine instance group, or Cloud Run service.
+                                </p>
+                                <div class="step-services">
+                                    <span class="service-tag">HTTP(S) Load Balancer</span>
+                                    <span class="service-tag">Backend Services</span>
+                                    <span class="service-tag">Health Checks</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flow-step">
+                            <span class="step-number">4</span>
+                            <div>
+                                <h3 class="step-title">Application Processing (GKE)</h3>
+                                <p class="step-description">
+                                    Request enters private VPC network through internal load balancer. GKE ingress controller routes to appropriate service pod. Application checks Cloud Memorystore (Redis) for cached data. If cache hit: return cached response immediately. If cache miss: proceed to database query.
+                                </p>
+                                <div class="step-services">
+                                    <span class="service-tag">GKE Cluster</span>
+                                    <span class="service-tag">Kubernetes Service</span>
+                                    <span class="service-tag">Cloud Memorystore</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flow-step">
+                            <span class="step-number">5</span>
+                            <div>
+                                <h3 class="step-title">Data Layer Access</h3>
+                                <p class="step-description">
+                                    Application retrieves database credentials from Secret Manager. Connects to Cloud SQL via private IP (no internet exposure). For read operations: uses read replica to offload primary database. For write operations: connects to primary instance. Query results cached in Memorystore with TTL. Large objects (images, files) retrieved from Cloud Storage buckets.
+                                </p>
+                                <div class="step-services">
+                                    <span class="service-tag">Cloud SQL</span>
+                                    <span class="service-tag">Secret Manager</span>
+                                    <span class="service-tag">Cloud Storage</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flow-step">
+                            <span class="step-number">6</span>
+                            <div>
+                                <h3 class="step-title">Response Generation & Delivery</h3>
+                                <p class="step-description">
+                                    Application generates HTML/JSON response. Response metadata logged to Cloud Logging. Performance metrics sent to Cloud Monitoring. Response cached in Memorystore for future requests. Dynamic content returned through load balancer to user. Static assets served from CDN for subsequent requests.
+                                </p>
+                                <div class="step-services">
+                                    <span class="service-tag">Cloud Monitoring</span>
+                                    <span class="service-tag">Cloud Logging</span>
+                                    <span class="service-tag">Cloud CDN</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flow-step">
+                            <span class="step-number">7</span>
+                            <div>
+                                <h3 class="step-title">Async Processing & Events</h3>
+                                <p class="step-description">
+                                    Background tasks published to Cloud Pub/Sub topics. Examples: order confirmation emails, inventory updates, analytics processing. Cloud Functions or Cloud Run triggered by Pub/Sub messages. Long-running tasks processed by worker pods in GKE. Results stored back to Cloud SQL or BigQuery for analytics.
+                                </p>
+                                <div class="step-services">
+                                    <span class="service-tag">Cloud Pub/Sub</span>
+                                    <span class="service-tag">Cloud Functions</span>
+                                    <span class="service-tag">Cloud Run</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Architecture Layers Diagram -->
+                <div class="architecture-diagram">
+                    <h2 class="flow-title">Architecture Layers</h2>
+                    
+                    <div class="layer layer-frontend">
+                        <h3 class="layer-title">🌐 Frontend Layer</h3>
+                        <div class="layer-components">
+                            <div class="component">
+                                <div class="component-name">Cloud CDN</div>
+                                <div class="component-desc">Global content delivery</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Cloud Load Balancer</div>
+                                <div class="component-desc">HTTPS load balancing</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Cloud Armor</div>
+                                <div class="component-desc">DDoS protection & WAF</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">SSL Certificates</div>
+                                <div class="component-desc">Managed certificates</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="layer layer-application">
+                        <h3 class="layer-title">⚙️ Application Layer</h3>
+                        <div class="layer-components">
+                            <div class="component">
+                                <div class="component-name">GKE Cluster</div>
+                                <div class="component-desc">Containerized microservices</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Compute Engine</div>
+                                <div class="component-desc">VM instances</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Cloud Run</div>
+                                <div class="component-desc">Serverless containers</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Cloud Functions</div>
+                                <div class="component-desc">Event-driven functions</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Cloud Memorystore</div>
+                                <div class="component-desc">Redis caching</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Cloud Pub/Sub</div>
+                                <div class="component-desc">Message queue</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="layer layer-data">
+                        <h3 class="layer-title">💾 Data Layer</h3>
+                        <div class="layer-components">
+                            <div class="component">
+                                <div class="component-name">Cloud SQL</div>
+                                <div class="component-desc">PostgreSQL database</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Read Replicas</div>
+                                <div class="component-desc">Scalable reads</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Cloud Storage</div>
+                                <div class="component-desc">Object storage</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Cloud Spanner</div>
+                                <div class="component-desc">Global database</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Bigtable</div>
+                                <div class="component-desc">NoSQL analytics</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="layer layer-security">
+                        <h3 class="layer-title">🔒 Security & Operations</h3>
+                        <div class="layer-components">
+                            <div class="component">
+                                <div class="component-name">Cloud IAM</div>
+                                <div class="component-desc">Access management</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Cloud KMS</div>
+                                <div class="component-desc">Key management</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Secret Manager</div>
+                                <div class="component-desc">Secrets storage</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Cloud Monitoring</div>
+                                <div class="component-desc">Metrics & alerts</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">Cloud Logging</div>
+                                <div class="component-desc">Centralized logs</div>
+                            </div>
+                            <div class="component">
+                                <div class="component-name">VPC Network</div>
+                                <div class="component-desc">Private networking</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Initial Setup Section -->
+        <div id="setup" class="content-section">
+            <div class="cli-container">
+                <div class="phase">
+                    <h2 class="phase-title">
+                        <span class="phase-number">1</span>
+                        Initial Setup & Configuration
+                    </h2>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 1.1: Install Google Cloud SDK</h3>
+                        <div class="command-block">
+                            <p class="command-description">Download and install the Cloud SDK:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">bash</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code><span class="syntax-comment"># For Linux/Mac</span>
+curl https://sdk.cloud.google.com | bash
+exec -l $SHELL
+gcloud init</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 1.2: Authenticate and Configure</h3>
+                        <div class="command-block">
+                            <p class="command-description">Login to your Google Cloud account:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud auth login</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Create a new GCP project:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud projects create shopglobal-prod --name="ShopGlobal Production"</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Set the project as default:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud config set project shopglobal-prod
+gcloud config set compute/region us-central1
+gcloud config set compute/zone us-central1-a</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 1.3: Enable Required APIs</h3>
+                        <div class="command-block">
+                            <p class="command-description">Enable all necessary GCP services:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud services enable compute.googleapis.com
+gcloud services enable container.googleapis.com
+gcloud services enable sqladmin.googleapis.com
+gcloud services enable storage-api.googleapis.com
+gcloud services enable cloudkms.googleapis.com
+gcloud services enable secretmanager.googleapis.com
+gcloud services enable monitoring.googleapis.com
+gcloud services enable logging.googleapis.com
+gcloud services enable cloudresourcemanager.googleapis.com</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 1.4: Link Billing Account</h3>
+                        <div class="command-block">
+                            <p class="command-description">List available billing accounts:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud billing accounts list</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Link billing to project (replace BILLING_ACCOUNT_ID):</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud billing projects link shopglobal-prod \
+    --billing-account=XXXXXX-XXXXXX-XXXXXX</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box success">
+                        <div class="info-title">✓ Setup Complete</div>
+                        <p>Your GCP environment is now configured and ready. All required APIs are enabled and billing is linked.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Networking Section -->
+        <div id="networking" class="content-section">
+            <div class="cli-container">
+                <div class="phase">
+                    <h2 class="phase-title">
+                        <span class="phase-number">2</span>
+                        Networking Infrastructure
+                    </h2>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 2.1: Create VPC Network</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create a custom VPC network:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute networks create shopglobal-vpc \
+    --subnet-mode=custom \
+    --bgp-routing-mode=regional</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 2.2: Create Subnets</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create subnet for web tier:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute networks subnets create web-subnet \
+    --network=shopglobal-vpc \
+    --region=us-central1 \
+    --range=10.0.1.0/24 \
+    --enable-private-ip-google-access</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Create subnet for application tier:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute networks subnets create app-subnet \
+    --network=shopglobal-vpc \
+    --region=us-central1 \
+    --range=10.0.2.0/24 \
+    --enable-private-ip-google-access</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Create subnet for GKE cluster with secondary ranges:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute networks subnets create gke-subnet \
+    --network=shopglobal-vpc \
+    --region=us-central1 \
+    --range=10.0.10.0/24 \
+    --secondary-range pods=10.1.0.0/16,services=10.2.0.0/20 \
+    --enable-private-ip-google-access</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 2.3: Configure Firewall Rules</h3>
+                        <div class="command-block">
+                            <p class="command-description">Allow HTTP/HTTPS from internet:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute firewall-rules create allow-http-https \
+    --network=shopglobal-vpc \
+    --allow=tcp:80,tcp:443 \
+    --source-ranges=0.0.0.0/0 \
+    --target-tags=web-server</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Allow internal communication:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute firewall-rules create allow-internal \
+    --network=shopglobal-vpc \
+    --allow=tcp:0-65535,udp:0-65535,icmp \
+    --source-ranges=10.0.0.0/8</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Allow SSH via Cloud IAP:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute firewall-rules create allow-ssh-iap \
+    --network=shopglobal-vpc \
+    --allow=tcp:22 \
+    --source-ranges=35.235.240.0/20</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 2.4: Set Up Cloud NAT</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create Cloud Router:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute routers create nat-router \
+    --network=shopglobal-vpc \
+    --region=us-central1</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Configure Cloud NAT:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute routers nats create nat-config \
+    --router=nat-router \
+    --region=us-central1 \
+    --nat-all-subnet-ip-ranges \
+    --auto-allocate-nat-external-ips</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box success">
+                        <div class="info-title">✓ Networking Complete</div>
+                        <p>VPC network created with multiple subnets, firewall rules configured, and Cloud NAT enabled for private instances.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compute & GKE Section -->
+        <div id="compute" class="content-section">
+            <div class="cli-container">
+                <div class="phase">
+                    <h2 class="phase-title">
+                        <span class="phase-number">3</span>
+                        Compute Engine & Kubernetes
+                    </h2>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 3.1: Create GKE Cluster</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create a production-grade GKE cluster:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud container clusters create shopglobal-cluster \
+    --region=us-central1 \
+    --node-locations=us-central1-a,us-central1-b,us-central1-c \
+    --num-nodes=1 \
+    --machine-type=n2-standard-4 \
+    --disk-type=pd-ssd \
+    --disk-size=50GB \
+    --enable-autoscaling \
+    --min-nodes=1 \
+    --max-nodes=5 \
+    --enable-autorepair \
+    --enable-autoupgrade \
+    --network=shopglobal-vpc \
+    --subnetwork=gke-subnet \
+    --cluster-secondary-range-name=pods \
+    --services-secondary-range-name=services \
+    --enable-ip-alias \
+    --enable-stackdriver-kubernetes \
+    --addons=HorizontalPodAutoscaling,HttpLoadBalancing \
+    --workload-pool=shopglobal-prod.svc.id.goog \
+    --enable-shielded-nodes</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 3.2: Configure kubectl</h3>
+                        <div class="command-block">
+                            <p class="command-description">Get cluster credentials:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud container clusters get-credentials shopglobal-cluster \
+    --region=us-central1</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Verify cluster connection:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">kubectl</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>kubectl cluster-info
+kubectl get nodes</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 3.3: Deploy Application to GKE</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create deployment YAML:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">yaml</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>cat > deployment.yaml << EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ecommerce-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ecommerce
+  template:
+    metadata:
+      labels:
+        app: ecommerce
+    spec:
+      containers:
+      - name: app
+        image: gcr.io/shopglobal-prod/ecommerce-app:v1
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        env:
+        - name: DB_HOST
+          value: "10.0.3.3"
+        - name: REDIS_HOST
+          value: "10.0.3.5"
+EOF</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Apply deployment:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">kubectl</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>kubectl apply -f deployment.yaml</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 3.4: Create Service</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create Kubernetes service:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">yaml</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>cat > service.yaml << EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: ecommerce-service
+spec:
+  type: NodePort
+  selector:
+    app: ecommerce
+  ports:
+  - port: 80
+    targetPort: 8080
+EOF
+
+kubectl apply -f service.yaml</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 3.5: Configure Autoscaling</h3>
+                        <div class="command-block">
+                            <p class="command-description">Enable Horizontal Pod Autoscaler:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">kubectl</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>kubectl autoscale deployment ecommerce-app \
+    --cpu-percent=70 \
+    --min=3 \
+    --max=20</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 3.6: Compute Engine (Optional)</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create instance template:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute instance-templates create web-server-template \
+    --machine-type=n2-standard-2 \
+    --network-interface=subnet=web-subnet,no-address \
+    --tags=web-server \
+    --boot-disk-size=20GB \
+    --boot-disk-type=pd-ssd</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Create managed instance group:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute instance-groups managed create web-server-mig \
+    --base-instance-name=web-server \
+    --template=web-server-template \
+    --size=2 \
+    --zone=us-central1-a</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Configure autoscaling:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute instance-groups managed set-autoscaling web-server-mig \
+    --zone=us-central1-a \
+    --max-num-replicas=10 \
+    --min-num-replicas=2 \
+    --target-cpu-utilization=0.70 \
+    --cool-down-period=90</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box success">
+                        <div class="info-title">✓ Compute Layer Complete</div>
+                        <p>GKE cluster deployed with autoscaling enabled. Application pods running with horizontal pod autoscaling configured.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database Section -->
+        <div id="database" class="content-section">
+            <div class="cli-container">
+                <div class="phase">
+                    <h2 class="phase-title">
+                        <span class="phase-number">4</span>
+                        Database Setup
+                    </h2>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 4.1: Create Cloud SQL Instance</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create PostgreSQL instance with high availability:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql instances create shopglobal-db \
+    --database-version=POSTGRES_15 \
+    --tier=db-custom-4-16384 \
+    --region=us-central1 \
+    --network=projects/shopglobal-prod/global/networks/shopglobal-vpc \
+    --no-assign-ip \
+    --availability-type=REGIONAL \
+    --backup-start-time=02:00 \
+    --enable-bin-log \
+    --maintenance-window-day=SUN \
+    --maintenance-window-hour=3 \
+    --disk-type=SSD \
+    --disk-size=100GB \
+    --disk-autoresize</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 4.2: Set Database Password</h3>
+                        <div class="command-block">
+                            <p class="command-description">Set password for postgres user:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql users set-password postgres \
+    --instance=shopglobal-db \
+    --password=YourSecurePassword123!</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 4.3: Create Application Database</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create database for application:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql databases create ecommerce \
+    --instance=shopglobal-db</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 4.4: Create Read Replica</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create read replica for scaling:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql instances create shopglobal-db-replica \
+    --master-instance-name=shopglobal-db \
+    --tier=db-custom-4-16384 \
+    --region=us-central1 \
+    --replica-type=READ</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 4.5: Enable Backups & PITR</h3>
+                        <div class="command-block">
+                            <p class="command-description">Configure automated backups:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql instances patch shopglobal-db \
+    --backup-start-time=02:00 \
+    --enable-point-in-time-recovery \
+    --retained-backups-count=7</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Create on-demand backup:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql backups create \
+    --instance=shopglobal-db \
+    --description="Initial backup"</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 4.6: Verify Database Setup</h3>
+                        <div class="command-block">
+                            <p class="command-description">List all database instances:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql instances list</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Get database connection info:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql instances describe shopglobal-db</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box success">
+                        <div class="info-title">✓ Database Setup Complete</div>
+                        <p>Cloud SQL PostgreSQL instance created with high availability, automated backups, and read replica for scaling.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Storage Section -->
+        <div id="storage" class="content-section">
+            <div class="cli-container">
+                <div class="phase">
+                    <h2 class="phase-title">
+                        <span class="phase-number">5</span>
+                        Cloud Storage Configuration
+                    </h2>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 5.1: Create Storage Buckets</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create bucket for product images:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud storage buckets create gs://shopglobal-product-images \
+    --location=us-central1 \
+    --uniform-bucket-level-access</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Create bucket for user uploads:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud storage buckets create gs://shopglobal-user-uploads \
+    --location=us-central1 \
+    --uniform-bucket-level-access</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Create bucket for backups:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud storage buckets create gs://shopglobal-backups \
+    --location=us-central1 \
+    --uniform-bucket-level-access</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 5.2: Configure Lifecycle Policies</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create lifecycle policy JSON:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">json</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>cat > lifecycle.json << 'EOF'
+{
+  "lifecycle": {
+    "rule": [
+      {
+        "action": {"type": "SetStorageClass", "storageClass": "NEARLINE"},
+        "condition": {"age": 30}
+      },
+      {
+        "action": {"type": "SetStorageClass", "storageClass": "COLDLINE"},
+        "condition": {"age": 90}
+      },
+      {
+        "action": {"type": "Delete"},
+        "condition": {"age": 365}
+      }
+    ]
+  }
+}
+EOF</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Apply lifecycle policy:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud storage buckets update gs://shopglobal-backups \
+    --lifecycle-file=lifecycle.json</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 5.3: Enable Versioning</h3>
+                        <div class="command-block">
+                            <p class="command-description">Enable versioning for critical buckets:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud storage buckets update gs://shopglobal-product-images \
+    --versioning</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 5.4: Configure CORS</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create CORS configuration:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">json</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>cat > cors.json << 'EOF'
+[
+  {
+    "origin": ["https://www.shopglobal.com"],
+    "method": ["GET", "HEAD", "PUT", "POST", "DELETE"],
+    "responseHeader": ["Content-Type"],
+    "maxAgeSeconds": 3600
+  }
+]
+EOF</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Apply CORS configuration:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud storage buckets update gs://shopglobal-user-uploads \
+    --cors-file=cors.json</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 5.5: Set IAM Permissions</h3>
+                        <div class="command-block">
+                            <p class="command-description">Grant service account access:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud storage buckets add-iam-policy-binding \
+    gs://shopglobal-product-images \
+    --member="serviceAccount:app-service-account@shopglobal-prod.iam.gserviceaccount.com" \
+    --role="roles/storage.objectViewer"</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box success">
+                        <div class="info-title">✓ Storage Configuration Complete</div>
+                        <p>Cloud Storage buckets created with lifecycle policies, versioning, and CORS configured for optimal cost and performance.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Load Balancer Section -->
+        <div id="loadbalancer" class="content-section">
+            <div class="cli-container">
+                <div class="phase">
+                    <h2 class="phase-title">
+                        <span class="phase-number">6</span>
+                        Load Balancing & CDN
+                    </h2>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 6.1: Reserve Static IP</h3>
+                        <div class="command-block">
+                            <p class="command-description">Reserve global static IP address:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute addresses create shopglobal-ip \
+    --ip-version=IPV4 \
+    --global</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Get the reserved IP address:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute addresses describe shopglobal-ip --global</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 6.2: Create Health Check</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create HTTP health check:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute health-checks create http web-health-check \
+    --port=80 \
+    --request-path=/health \
+    --check-interval=10s \
+    --timeout=5s \
+    --unhealthy-threshold=3 \
+    --healthy-threshold=2</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 6.3: Create Backend Service</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create backend service with CDN enabled:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute backend-services create web-backend-service \
+    --protocol=HTTP \
+    --health-checks=web-health-check \
+    --global \
+    --enable-cdn \
+    --cache-mode=CACHE_ALL_STATIC</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Add GKE backend (NEG - Network Endpoint Group):</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute backend-services add-backend web-backend-service \
+    --instance-group=web-server-mig \
+    --instance-group-zone=us-central1-a \
+    --balancing-mode=UTILIZATION \
+    --max-utilization=0.8 \
+    --capacity-scaler=1.0 \
+    --global</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 6.4: Create URL Map</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create URL map for routing:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute url-maps create web-url-map \
+    --default-service=web-backend-service</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 6.5: Create SSL Certificate</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create managed SSL certificate:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute ssl-certificates create shopglobal-cert \
+    --domains=www.shopglobal.com,shopglobal.com \
+    --global</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 6.6: Create HTTPS Proxy</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create target HTTPS proxy:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute target-https-proxies create web-https-proxy \
+    --url-map=web-url-map \
+    --ssl-certificates=shopglobal-cert</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 6.7: Create Forwarding Rule</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create global forwarding rule:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute forwarding-rules create web-forwarding-rule \
+    --address=shopglobal-ip \
+    --global \
+    --target-https-proxy=web-https-proxy \
+    --ports=443</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 6.8: Configure Cloud Armor</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create security policy:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute security-policies create shopglobal-security-policy \
+    --description="Security policy for ShopGlobal"</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Add SQL injection protection:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute security-policies rules create 1000 \
+    --security-policy=shopglobal-security-policy \
+    --expression="evaluatePreconfiguredExpr('sqli-stable')" \
+    --action=deny-403</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Attach policy to backend:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute backend-services update web-backend-service \
+    --security-policy=shopglobal-security-policy \
+    --global</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box success">
+                        <div class="info-title">✓ Load Balancing Complete</div>
+                        <p>Global HTTPS load balancer configured with CDN, SSL, and Cloud Armor security policies.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Section -->
+        <div id="security" class="content-section">
+            <div class="cli-container">
+                <div class="phase">
+                    <h2 class="phase-title">
+                        <span class="phase-number">7</span>
+                        Security Configuration
+                    </h2>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 7.1: Set Up Cloud KMS</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create key ring:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud kms keyrings create shopglobal-keyring \
+    --location=us-central1</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Create encryption keys:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud kms keys create database-key \
+    --location=us-central1 \
+    --keyring=shopglobal-keyring \
+    --purpose=encryption \
+    --rotation-period=90d \
+    --next-rotation-time=2025-03-01T00:00:00Z
+
+gcloud kms keys create storage-key \
+    --location=us-central1 \
+    --keyring=shopglobal-keyring \
+    --purpose=encryption \
+    --rotation-period=90d</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 7.2: Configure IAM</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create service account:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud iam service-accounts create app-service-account \
+    --display-name="Application Service Account"</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Grant necessary permissions:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud projects add-iam-policy-binding shopglobal-prod \
+    --member="serviceAccount:app-service-account@shopglobal-prod.iam.gserviceaccount.com" \
+    --role="roles/cloudsql.client"
+
+gcloud projects add-iam-policy-binding shopglobal-prod \
+    --member="serviceAccount:app-service-account@shopglobal-prod.iam.gserviceaccount.com" \
+    --role="roles/storage.objectViewer"</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 7.3: Configure Secret Manager</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create secrets:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>echo -n "YourSecurePassword123!" | \
+    gcloud secrets create db-password --data-file=-
+
+echo -n "your-api-key-here" | \
+    gcloud secrets create api-key --data-file=-</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Grant access to service account:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud secrets add-iam-policy-binding db-password \
+    --member="serviceAccount:app-service-account@shopglobal-prod.iam.gserviceaccount.com" \
+    --role="roles/secretmanager.secretAccessor"</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 7.4: Enable Audit Logging</h3>
+                        <div class="command-block">
+                            <p class="command-description">Configure audit logs:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud logging sinks create audit-logs-sink \
+    bigquery.googleapis.com/projects/shopglobal-prod/datasets/audit_logs \
+    --log-filter='protoPayload.@type="type.googleapis.com/google.cloud.audit.AuditLog"'</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 7.5: Set Up Monitoring Alerts</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create alert for high CPU:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud alpha monitoring policies create \
+    --notification-channels=CHANNEL_ID \
+    --display-name="High CPU Usage" \
+    --condition-display-name="CPU > 80%" \
+    --condition-threshold-value=0.8 \
+    --condition-threshold-duration=300s \
+    --condition-filter='resource.type="gce_instance" AND metric.type="compute.googleapis.com/instance/cpu/utilization"'</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box success">
+                        <div class="info-title">✓ Security Configuration Complete</div>
+                        <p>Cloud KMS, IAM, Secret Manager, and audit logging configured. Monitoring alerts active.</p>
+                    </div>
+
+                    <div class="info-box warning">
+                        <div class="info-title">⚠️ Security Best Practices</div>
+                        <p>Enable MFA for all admin accounts. Regularly rotate credentials. Review IAM permissions quarterly. Keep audit logs for compliance. Test disaster recovery procedures monthly.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verification Section -->
+        <div id="verification" class="content-section">
+            <div class="cli-container">
+                <div class="phase">
+                    <h2 class="phase-title">
+                        <span class="phase-number">8</span>
+                        Verification & Testing
+                    </h2>
+
+                    <div class="info-box">
+                        <div class="info-title">📋 Verification Overview</div>
+                        <p>This section provides comprehensive verification steps to ensure all GCP components are correctly configured and functioning as expected.</p>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 8.1: Verify Project Configuration</h3>
+                        <div class="command-block">
+                            <p class="command-description">Check current project settings:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud config list</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Verify billing is enabled:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud billing projects describe shopglobal-prod</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">List all enabled APIs:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud services list --enabled</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 8.2: Verify Networking</h3>
+                        <div class="command-block">
+                            <p class="command-description">List all VPC networks:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute networks list</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">List all subnets:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute networks subnets list --network=shopglobal-vpc</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Verify firewall rules:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute firewall-rules list --filter="network:shopglobal-vpc"</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Check Cloud NAT configuration:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute routers nats list --router=nat-router --region=us-central1</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 8.3: Verify GKE Cluster</h3>
+                        <div class="command-block">
+                            <p class="command-description">Check cluster status:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud container clusters describe shopglobal-cluster --region=us-central1</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">List all nodes:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">kubectl</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>kubectl get nodes -o wide</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Check node health and resources:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">kubectl</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>kubectl top nodes</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Verify deployments:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">kubectl</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>kubectl get deployments --all-namespaces</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Check pod status:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">kubectl</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>kubectl get pods --all-namespaces -o wide</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Verify services:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">kubectl</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>kubectl get services --all-namespaces</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Check HPA (Horizontal Pod Autoscaler):</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">kubectl</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>kubectl get hpa</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 8.4: Verify Database</h3>
+                        <div class="command-block">
+                            <p class="command-description">List all Cloud SQL instances:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql instances list</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Check database instance details:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql instances describe shopglobal-db</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">List databases:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql databases list --instance=shopglobal-db</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Verify backups:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql backups list --instance=shopglobal-db</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Check replica status:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql instances describe shopglobal-db-replica</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Test database connectivity:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql connect shopglobal-db --user=postgres</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 8.5: Verify Storage</h3>
+                        <div class="command-block">
+                            <p class="command-description">List all storage buckets:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud storage buckets list</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Check bucket configuration:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud storage buckets describe gs://shopglobal-product-images</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Verify lifecycle policies:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud storage buckets describe gs://shopglobal-backups --format="get(lifecycle)"</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Check versioning status:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud storage buckets describe gs://shopglobal-product-images --format="get(versioning)"</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Test bucket access (upload test file):</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">bash</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>echo "Test file" > test.txt
+gcloud storage cp test.txt gs://shopglobal-product-images/
+gcloud storage ls gs://shopglobal-product-images/
+gcloud storage rm gs://shopglobal-product-images/test.txt</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 8.6: Verify Load Balancer</h3>
+                        <div class="command-block">
+                            <p class="command-description">Check static IP address:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute addresses list --global</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Verify backend services:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute backend-services list --global</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Check backend health:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute backend-services get-health web-backend-service --global</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Verify SSL certificates:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute ssl-certificates list</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Check SSL certificate status:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute ssl-certificates describe shopglobal-cert</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Verify forwarding rules:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute forwarding-rules list --global</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Check Cloud Armor policies:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute security-policies list
+gcloud compute security-policies describe shopglobal-security-policy</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Test HTTPS endpoint:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">bash</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>curl -I https://www.shopglobal.com</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 8.7: Verify Security</h3>
+                        <div class="command-block">
+                            <p class="command-description">List KMS key rings:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud kms keyrings list --location=us-central1</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">List encryption keys:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud kms keys list --location=us-central1 --keyring=shopglobal-keyring</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Verify service accounts:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud iam service-accounts list</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Check IAM policies:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud projects get-iam-policy shopglobal-prod</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">List secrets:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud secrets list</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Verify secret access:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud secrets versions access latest --secret="db-password"</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 8.8: Performance Testing</h3>
+                        <div class="command-block">
+                            <p class="command-description">Install Apache Bench for load testing:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">bash</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>sudo apt-get update
+sudo apt-get install -y apache2-utils</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Run basic load test (100 concurrent users, 10000 requests):</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">bash</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>ab -n 10000 -c 100 https://www.shopglobal.com/</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Run sustained load test (5 minutes):</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">bash</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>ab -t 300 -c 100 https://www.shopglobal.com/</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Test with POST requests:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">bash</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>ab -n 1000 -c 50 -p post_data.json -T application/json https://www.shopglobal.com/api/orders</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 8.9: Monitoring & Logging Verification</h3>
+                        <div class="command-block">
+                            <p class="command-description">View recent logs:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud logging read "resource.type=k8s_container" --limit=50 --format=json</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Check for errors in last hour:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud logging read "severity>=ERROR AND timestamp>\"$(date -u -d '1 hour ago' '+%Y-%m-%dT%H:%M:%SZ')\"" --limit=100</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">View Cloud SQL logs:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud logging read "resource.type=cloudsql_database" --limit=50</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Check monitoring metrics:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud monitoring time-series list --filter='metric.type="compute.googleapis.com/instance/cpu/utilization"'</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">List alert policies:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud alpha monitoring policies list</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 8.10: Disaster Recovery Testing</h3>
+                        <div class="command-block">
+                            <p class="command-description">Create manual backup:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql backups create --instance=shopglobal-db --description="Manual test backup"</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Test backup restore (to test instance):</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code># First, get the backup ID
+gcloud sql backups list --instance=shopglobal-db
+
+# Create test instance from backup
+gcloud sql instances create shopglobal-db-test \
+    --database-version=POSTGRES_15 \
+    --tier=db-custom-2-8192 \
+    --region=us-central1
+
+# Restore backup to test instance
+gcloud sql backups restore BACKUP_ID \
+    --backup-instance=shopglobal-db \
+    --backup-id=BACKUP_ID \
+    --instance=shopglobal-db-test</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Test point-in-time recovery:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql instances clone shopglobal-db shopglobal-db-pitr-test \
+    --point-in-time='2025-01-15T10:00:00.000Z'</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 8.11: Security Audit</h3>
+                        <div class="command-block">
+                            <p class="command-description">Run security health check:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud asset search-all-resources --query="*"</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Check for publicly accessible resources:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud compute instances list --filter="networkInterfaces[].accessConfigs[0].natIP:*"</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Verify encryption at rest:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql instances describe shopglobal-db --format="get(settings.dataDiskEncryptionConfiguration)"</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Check SSL enforcement:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud sql instances describe shopglobal-db --format="get(settings.ipConfiguration.requireSsl)"</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-container">
+                        <h3 class="step-header">Step 8.12: Cost Monitoring</h3>
+                        <div class="command-block">
+                            <p class="command-description">View current month's costs:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud billing accounts list
+gcloud beta billing projects describe shopglobal-prod</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Export billing data to BigQuery for analysis:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud beta billing accounts get-iam-policy BILLING_ACCOUNT_ID</code></pre>
+                            </div>
+                        </div>
+
+                        <div class="command-block">
+                            <p class="command-description">Check for cost optimization recommendations:</p>
+                            <div class="code-wrapper">
+                                <div class="code-header">
+                                    <span class="code-title">gcloud</span>
+                                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                                </div>
+                                <pre><code>gcloud recommender recommendations list \
+    --project=shopglobal-prod \
+    --recommender=google.compute.instance.MachineTypeRecommender \
+    --location=us-central1</code></pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-box success">
+                        <div class="info-title">✅ Verification Checklist</div>
+                        <p><strong>Before going to production, ensure:</strong></p>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li>All resources are created and in RUNNING state</li>
+                            <li>Health checks are passing for all services</li>
+                            <li>Load balancer is routing traffic correctly</li>
+                            <li>Database backups are configured and tested</li>
+                            <li>SSL certificates are active and valid</li>
+                            <li>Monitoring alerts are configured and tested</li>
+                            <li>Security policies are in place</li>
+                            <li>Autoscaling is functioning properly</li>
+                            <li>Disaster recovery procedures are documented and tested</li>
+                            <li>Cost monitoring and budgets are configured</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-box warning">
+                        <div class="info-title">⚠️ Common Issues & Troubleshooting</div>
+                        <p><strong>If you encounter issues:</strong></p>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li><strong>Pods not starting:</strong> Check logs with kubectl logs POD_NAME</li>
+                            <li><strong>Database connection failed:</strong> Verify VPC peering and Cloud SQL Proxy</li>
+                            <li><strong>Load balancer not working:</strong> Check backend health and firewall rules</li>
+                            <li><strong>SSL certificate pending:</strong> Wait up to 30 minutes for DNS propagation</li>
+                            <li><strong>High costs:</strong> Review recommender suggestions and unused resources</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-title">📊 Performance Benchmarks</div>
+                        <p><strong>Expected performance metrics:</strong></p>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+                            <li>Page load time: < 2 seconds (95th percentile)</li>
+                            <li>API response time: < 200ms (99th percentile)</li>
+                            <li>Database query time: < 100ms (standard queries)</li>
+                            <li>Throughput: 10,000+ requests/second at peak</li>
+                            <li>Availability: 99.95% SLA</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Hide all content sections
+            const sections = document.querySelectorAll('.content-section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // Show selected content section
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function copyCode(button) {
+            const codeBlock = button.closest('.code-wrapper').querySelector('code');
+            const text = codeBlock.textContent;
+
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
+
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+                button.textContent = 'Error!';
+            });
+        }
+
+        // Add keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                const activeBtn = document.querySelector('.tab-btn.active');
+                const nextBtn = activeBtn.nextElementSibling;
+                if (nextBtn && nextBtn.classList.contains('tab-btn')) {
+                    nextBtn.click();
+                }
+            } else if (e.key === 'ArrowLeft') {
+                const activeBtn = document.querySelector('.tab-btn.active');
+                const prevBtn = activeBtn.previousElementSibling;
+                if (prevBtn && prevBtn.classList.contains('tab-btn')) {
+                    prevBtn.click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
