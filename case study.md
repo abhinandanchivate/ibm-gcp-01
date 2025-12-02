@@ -161,4 +161,21 @@ CREATE TABLE payments (
 
 ---
 
-
+A. 5  JOIN Questions
+1️⃣ Fetch all orders with customer name, product name, quantity, order status, and payment status using 4-table JOIN.
+2️⃣ List customers who purchased any product priced above ₹1500 using JOIN conditions.
+3️⃣ Show the total quantity sold for each product along with the product name using JOIN + GROUP BY.
+4️⃣ Find customers who have successful payments, but their orders are still marked as "PENDING".
+5️⃣ Identify customers who bought the same product more than once using JOIN + self-referencing logic.
+✅ B. 5  SUBQUERY Questions
+1️⃣ Find the highest-spending customer using a nested subquery.
+2️⃣ List all products that have never been ordered using a NOT IN subquery.
+3️⃣ Find customers who placed more orders than the average orders placed per customer.
+4️⃣ List all orders whose payment amount is less than the order's total amount (subquery per order).
+5️⃣ Find the top 3 most-sold products by quantity using a subquery.
+✅ C. 5 GROUP BY + HAVING + WHERE Questions
+1️⃣ Show all products whose total revenue (qty × price) is greater than ₹10,000.
+2️⃣ List customers who have placed more than 3 orders (use GROUP BY + HAVING).
+3️⃣ Find days on which total sales exceeded ₹50,000 (GROUP BY date).
+4️⃣ Identify customers whose successful payment percentage is below 50%.
+5️⃣ List customers whose total spend across all orders exceeds ₹1,00,000.
